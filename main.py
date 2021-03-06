@@ -10,5 +10,7 @@ def main(parse_str: str):
 
 
 if __name__() == '__main__':
-    parse_str = r'$(3*sin(\pi^2)+1)/2$'
+    parse_str_1 = r'$(3*sin(\pi^2)+1)/2$'  # input str
+    paren_rpn_str_1 = r'( 3 ( ( \pi 2 ^) sin) *)'  # output in RPN with parens
+    noparen_rpn_str_1 = r'3 \pi 2 ^ sin *'  # output ion RPN with no parens
     main(parse_str)

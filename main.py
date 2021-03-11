@@ -1,21 +1,17 @@
 
-from parser import Parser
+import sys
+
+from parser import LatexParser
 
 
 def main(parse_str: str):
-    parsed_str = Parser.parse(parse_str)
-    ast = Parser.to_ast(parse_str)
+    latex_parser = LatexParser()
+    parsed_str = latex_parser.parse(parse_string=parse_str)
+    ast = latex_parser.to_ast(parse_string=parse_str)
     print("RPN: {}", parsed_str)
     print("AST: {}", ast)
 
 
-if __name__() == '__main__':
-    parse_str_1 = r'$(3*sin(\pi^2)+1)/2$'  # input str
-    paren_rpn_str_1 = r'( 3 ( ( \pi 2 ^) sin) *)'  # output in RPN with parens
-    noparen_rpn_str_1 = r'3 \pi 2 ^ sin *'  # output ion RPN with no parens
-
-    parse_str_2 = r'$(1+3) * (2+4)$'
-    paren_rpn_str_2 = r'( ( 1 3 +) ( 2 4 +) *)'
-    noparen_rpn_str_2 = r'1 3 + 2 4 + *'
-    
-    main(parse_str)
+if __name__ == '__main__':
+    for arg in sys.argv[1:]:
+        main(arg)

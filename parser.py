@@ -2,7 +2,7 @@ import ast
 
 
 def shunting_yard(parse_str: str) -> str:
-    raise NotImplementedError
+    raise NotImplementedError("[!] Shunting yard algorithm not implemented!")
 
 
 def idx_of_first_operator(rpn_str: str) -> int:
@@ -51,7 +51,7 @@ def rpn_to_ast(rpn_str: str) -> ast.AST:
         raise NotImplementedError("[!] Operator {} not recognised!", operator)
 
 
-class Parser:
+class LatexParser:
 
     def __init__(self):
         self._parse_str = ""
@@ -59,15 +59,14 @@ class Parser:
         self._ast = None
         self._parse_algorithm = shunting_yard
 
-    def parse(self, parse_str: str) -> str:
-        if parse_str != self._parse_str:
-            self._parse_str = parse_str
-            self._rpn_str = self._parse_algorithm(parse_str)
+    def parse(self, parse_string: str) -> str:
+        if parse_string != self._parse_str:
+            self._parse_str = parse_string
+            self._rpn_str = self._parse_algorithm(parse_string)
         return self._rpn_str
 
-    def to_ast(self, parse_str):
-        rpn_str = self.parse(parse_str)
+    def to_ast(self, parse_string):
+        rpn_str = self.parse(parse_string)
         ast = rpn_to_ast(rpn_str)
         self._ast = ast
         return ast
-

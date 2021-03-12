@@ -1,16 +1,16 @@
 import unittest
 
-from parser import lexer
-from parser import shunting_yard
-from parser import idx_of_first_operator
-from parser import idx_of_second_operator
-from parser import rpn_to_ast
+from algorithms import shunting_yard
+from lexer import Lexer
+from utilities import idx_of_first_operator
+from utilities import idx_of_second_operator
+from utilities import rpn_to_ast
 
 
 class TestLexer(unittest.TestCase):
 
     def setUp(self):
-        self.lexer = lexer()
+        self.lexer = Lexer()
 
     def test_lexes_latex(self):
         inp_1 = None

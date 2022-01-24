@@ -1,10 +1,19 @@
 import unittest
 
-from algorithms import shunting_yard
+from latex-parser.algorithms import to_token_list
+from latex-parser.algorithms import shunting yard
+
+
 from lexer import Lexer
+from parser import LatexParser
 from utilities import idx_of_first_operator
 from utilities import idx_of_second_operator
 from utilities import rpn_to_ast
+
+
+class TestFunctions(unittest.TestCase):
+    def setUp(self):
+        
 
 
 class TestLexer(unittest.TestCase):
@@ -76,3 +85,20 @@ class TestIndexOfOperators(unittest.TestCase):
         # intermediate_2 = r'1 3 + 2 4 + *'
         second_out_2 = 5
         self.assertEqual(idx_of_second_operator(second_inp_2), second_out_2)
+
+class TestParser(unittest.TestCase):
+
+    
+    def setUp(self):
+        self.parser = LatexParser()
+
+    def test_parser_simple(self):
+        inp = r'$(1+3) * (2+4)$'
+        out = r'1 3 + 2 4 + *'
+        self.assertEqual(self.parser(inp), out)
+        
+    def test_parser_medium(self):
+        inp = r'$(3*sin(\pi^2)+1)/2$'
+        out = r'3 \pi 2 ^ sin *'
+        self.assertEqual(self.parser(inp), out)
+        

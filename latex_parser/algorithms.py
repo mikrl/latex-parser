@@ -70,10 +70,11 @@ def shunting_yard(parse_str: str) -> str:
         raise NoOuterParenthesesError(
             "Input as prepared did not have outer parentheses!")
 
-    in_queue, error = to_token_list(parse_str)
     out_queue = []
     op_stack = []
 
+    in_queue, error = to_token_list(parse_str)
+    
     if error:
         raise UnknownTokenError(
             "Encountered an unrecognized token!\

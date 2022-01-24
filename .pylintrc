@@ -1,0 +1,2 @@
+[Master]
+init-hook='import os, sys; sys.path = [os.getcwd()] + sys.path'

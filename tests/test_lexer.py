@@ -28,12 +28,64 @@ class TestLexer(unittest.TestCase):
     def setUp(self):
         self.lexer = Lexer()
 
-    def test_lexer_functions(self):
+    def test_token_creation(self):
+        """
+        Tests the lexer can create a new token
+        and unsupported tokens raise an error.
+        """
         with self.assertRaises(TypeError):
             self.lexer._new_token("UNSUPPORTED")
 
         for token_type in ["CONS", "VAR", "BINOP_INFIX", "BINOP_PRFIX"]:
             assert re.match(f"{token_type}_[0-9]+", self.lexer._new_token(token_type))
+
+    def _test_token_extraction(
+        self, in_string, token_index, symbol_mapping, unlexed_indices
+    ):
+        """
+        Helper test to verify token extraction works.
+        """
+        assert self.lexer.token_index == {}
+        self.lexer._lex_functions(in_string)
+        assert self.lexer.token_index == token_index
+        assert self.lexer.symbol_mapping == symbol_mapping
+        assert self.lexer.unlexed_indices == unlexed_indices
+
+    def test_unlexed_indices(self):
+        in_string = "\sin(x)"
+        assert self.lexer.unlexed_indices == []
+        self.lexer.unlexed_indices = list(range(len(in_string)))
+        self.lexer._lex_functions(in_string)
+        assert self.lexer.unlexed_indices == [4, 5, 6]
+        assert len(in_string) - len(self.lexer.unlexed_indices) == len("\sin")
+
+    def test_effective_index(self):
+        in_string = "\sin(x)"
+        self.lexer.unlexed_indices = list(range(len(in_string)))
+        self.lexer._lex_functions(in_string)
+        assert self.lexer._effective_index(0) == 4
+
+    def test_function_pass1(self):
+        in_string = "\sin(x)"
+        self.lexer.unlexed_indices = list(range(len(in_string)))
+        token_index = {
+            "FUNC_1": 0,
+        }
+        symbol_mapping = {"FUNC_1": "sin"}
+        unlexed_indices = [4, 5, 6]
+        self._test_token_extraction(
+            in_string, token_index, symbol_mapping, unlexed_indices
+        )
+
+    def test_function_pass2(self):
+        in_string = "\sqrt{\sin(x**2)}"
+        self.lexer.unlexed_indices = list(range(len(in_string)))
+        token_index = {"FUNC_1": 0, "FUNC_2": 6}
+        symbol_mapping = {"FUNC_1": "sqrt", "FUNC_2": "sin"}
+        unlexed_indices = [5, 10, 11, 12, 13, 14, 15, 16]
+        self._test_token_extraction(
+            in_string, token_index, symbol_mapping, unlexed_indices
+        )
 
     def test_lexer_edge_cases(self):
         """
@@ -110,9 +162,28 @@ class TestLexer(unittest.TestCase):
         }
         self._test_lexing(in_string, output, mapping)
 
-    def test_lexes_functions(self):
+    def test_lex_easy_function(self):
         """
-        Test that the lexer can handle functions.
+        Test that the lexer can handle an easy function
+        """
+        in_string = "\sqrt{4}"
+        output = [
+            "FUNC_1",
+            "LPAREN",
+            "CONS_1",
+            "RPAREN",
+        ]
+        mapping = {
+            "FUNC_1": "sqrt",
+            "LPAREN": "(",
+            "CONS_1": "4",
+            "RPAREN": ")",
+        }
+        self._test_lexing(in_string, output, mapping)
+
+    def test_lex_hard_function(self):
+        """
+        Test that the lexer can handle a complicated function.
         """
         in_string = "\sin(x^{2}+1) + \ln(\frac{1}{x})"
         output = [

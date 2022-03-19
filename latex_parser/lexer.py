@@ -148,7 +148,6 @@ class Lexer:
         tokenize_variables = self._lex_variables(tokenize_functions)
         tokenize_literals = self._lex_literals(tokenize_variables)
         tokenize_operators = self._lex_operators(tokenize_literals)
-        tokenize_parens = self._lex_parens(tokenize_operators)
-        raise NotImplementedError
-        output = tokenize_parens
+        output = tokenize_operators
+        raise NotImplementedError("Need to reconstitute tokens into list")
         return output

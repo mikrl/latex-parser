@@ -37,18 +37,22 @@ class TestLexerUtilities(unittest.TestCase):
             self.lexer._new_token("UNSUPPORTED")
 
         for token_type in ["CONS", "VAR", "BINOP_INFIX", "BINOP_PRFIX"]:
-            assert re.match(f"{token_type}_[0-9]+", self.lexer._new_token(token_type))
+            self.assertIsNotNone(
+                re.match(f"{token_type}_[0-9]+", self.lexer._new_token(token_type))
+            )
 
     def test_unlexed_indices(self):
         """
         Test that the unlexed indices are correctly computed.
         """
         in_string = "\sin(x)"
-        assert self.lexer.unlexed_indices == []
+        self.assertEqual(self.lexer.unlexed_indices, [])
+
         self.lexer.unlexed_indices = list(range(len(in_string)))
         self.lexer._lex_functions(in_string)
-        assert self.lexer.unlexed_indices == [4, 5, 6]
-        assert len(in_string) - len(self.lexer.unlexed_indices) == len("\sin")
+
+        self.assertEqual(self.lexer.unlexed_indices, [4, 5, 6])
+        self.assertEqual(len(in_string) - len(self.lexer.unlexed_indices), len("\sin"))
 
     def test_effective_index(self):
         """
@@ -57,7 +61,7 @@ class TestLexerUtilities(unittest.TestCase):
         in_string = "\sin(x)"
         self.lexer.unlexed_indices = list(range(len(in_string)))
         self.lexer._lex_functions(in_string)
-        assert self.lexer._effective_index(0) == 4
+        self.assertEqual(self.lexer._effective_index(0), 4)
 
 
 class TestLexerPasses(unittest.TestCase):
@@ -75,9 +79,9 @@ class TestLexerPasses(unittest.TestCase):
 
         self.lexer.unlexed_indices = list(range(len(in_string)))
         lexer_output = self.lexer._lex_variables(in_string)
-        assert lexer_output == ""
-        assert self.lexer.token_index == out_dict
-        assert self.lexer.symbol_mapping == symbol_mapping
+        self.assertEqual(lexer_output, "")
+        self.assertEqual(self.lexer.token_index, out_dict)
+        self.assertEqual(self.lexer.symbol_mapping, symbol_mapping)
 
     def test_lex_single_lit(self):
         in_string = "3"
@@ -86,9 +90,9 @@ class TestLexerPasses(unittest.TestCase):
 
         self.lexer.unlexed_indices = list(range(len(in_string)))
         lexer_output = self.lexer._lex_literals(in_string)
-        assert lexer_output == ""
-        assert self.lexer.token_index == out_dict
-        assert self.lexer.symbol_mapping == symbol_mapping
+        self.assertEqual(lexer_output, "")
+        self.assertEqual(self.lexer.token_index, out_dict)
+        self.assertEqual(self.lexer.symbol_mapping, symbol_mapping)
 
     def test_lex_double_lit(self):
         in_string = "3+2"
@@ -97,9 +101,9 @@ class TestLexerPasses(unittest.TestCase):
 
         self.lexer.unlexed_indices = list(range(len(in_string)))
         lexer_output = self.lexer._lex_literals(in_string)
-        assert lexer_output == "+"
-        assert self.lexer.token_index == out_dict
-        assert self.lexer.symbol_mapping == symbol_mapping
+        self.assertEqual(lexer_output, "+")
+        self.assertEqual(self.lexer.token_index, out_dict)
+        self.assertEqual(self.lexer.symbol_mapping, symbol_mapping)
 
     def test_lex_single_func(self):
         in_string = "\sin(x)"
@@ -108,9 +112,9 @@ class TestLexerPasses(unittest.TestCase):
 
         self.lexer.unlexed_indices = list(range(len(in_string)))
         lexer_output = self.lexer._lex_functions(in_string)
-        assert lexer_output == "(x)"
-        assert self.lexer.token_index == out_dict
-        assert self.lexer.symbol_mapping == symbol_mapping
+        self.assertEqual(lexer_output, "(x)")
+        self.assertEqual(self.lexer.token_index, out_dict)
+        self.assertEqual(self.lexer.symbol_mapping, symbol_mapping)
 
     def test_lex_binary_operator(self):
         in_string = "3+2"
@@ -119,9 +123,9 @@ class TestLexerPasses(unittest.TestCase):
 
         self.lexer.unlexed_indices = list(range(len(in_string)))
         lexer_output = self.lexer._lex_operators(in_string)
-        assert lexer_output == "32"
-        assert self.lexer.token_index == out_dict
-        assert self.lexer.symbol_mapping == symbol_mapping
+        self.assertEqual(lexer_output, "32")
+        self.assertEqual(self.lexer.token_index, out_dict)
+        self.assertEqual(self.lexer.symbol_mapping, symbol_mapping)
 
 
 # @unittest.skip("Need to test lower level stuff first")
@@ -139,11 +143,11 @@ class TestLexer(unittest.TestCase):
         """
         Helper test to verify token extraction works.
         """
-        assert self.lexer.token_index == {}
+        self.assertEqual(self.lexer.token_index, {})
         self.lexer._lex_functions(in_string)
-        assert self.lexer.token_index == token_index
-        assert self.lexer.symbol_mapping == symbol_mapping
-        assert self.lexer.unlexed_indices == unlexed_indices
+        self.assertEqual(self.lexer.token_index, token_index)
+        self.assertEqual(self.lexer.symbol_mapping, symbol_mapping)
+        self.assertEqual(self.lexer.unlexed_indices, unlexed_indices)
 
     def test_function_pass1(self):
         in_string = "\sin(x)"
@@ -177,28 +181,28 @@ class TestLexer(unittest.TestCase):
             self.lexer.lex()
 
         # Test that lexing a null string yields a null list
-        assert self.lexer.lex("") == []
+        self.assertEqual(self.lexer.lex(""), [])
 
         # Test that a string of spaces yields a null list
         for i in range(0, 1024):
             spaces = " " * i
-            assert self.lexer.lex(spaces) == []
+            self.assertEqual(self.lexer.lex(spaces), [])
 
         # Test that adding spaces into an input yields the same output
         in_string = ""
         lexed_string = self.lexer.lex(in_string)
         for i in range(1, 128):
             spaced_string = _insert_spaces(in_string, i)
-            assert self.lexer.lex(spaced_string) == lexed_string
+            self.assertEqual(self.lexer.lex(spaced_string), lexed_string)
 
     def _test_lexing(self, in_string: str, output: List[str], mapping: Dict[str, str]):
         """
         Utility function to test that the lexer lexes and maps correctly.
         """
         lexer_output = self.lexer.lex(in_string)
-        assert lexer_output == output
+        self.assertEqual(lexer_output, output)
         for token in lexer_output:
-            assert self.lexer.symbol_table[token] == mapping[token]
+            self.assertEqual(self.lexer.symbol_table[token], mapping[token])
 
     def test_lexes_simple_equation(self):
         """

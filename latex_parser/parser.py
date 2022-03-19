@@ -1,10 +1,9 @@
-from algorithms import shunting_yard
-from lexer import Lexer
-from utilities import rpn_to_ast
+from latex_parser.algorithms import shunting_yard
+from latex_parser.lexer import Lexer
+from latex_parser.utilities import rpn_to_ast
 
 
 class LatexParser:
-
     def __init__(self):
         self._parse_str = ""
         self._rpn_str = ""

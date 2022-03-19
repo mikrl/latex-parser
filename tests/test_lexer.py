@@ -20,9 +20,9 @@ def _insert_spaces(string: str, max_run: int) -> str:
     return "".join(string)
 
 
-class TestLexer(unittest.TestCase):
+class TestLexerUtilities(unittest.TestCase):
     """
-    Test that the lexer successfully handles inputs.
+    Test that the lexer utilities work correctly
     """
 
     def setUp(self):
@@ -39,6 +39,100 @@ class TestLexer(unittest.TestCase):
         for token_type in ["CONS", "VAR", "BINOP_INFIX", "BINOP_PRFIX"]:
             assert re.match(f"{token_type}_[0-9]+", self.lexer._new_token(token_type))
 
+    def test_unlexed_indices(self):
+        """
+        Test that the unlexed indices are correctly computed.
+        """
+        in_string = "\sin(x)"
+        assert self.lexer.unlexed_indices == []
+        self.lexer.unlexed_indices = list(range(len(in_string)))
+        self.lexer._lex_functions(in_string)
+        assert self.lexer.unlexed_indices == [4, 5, 6]
+        assert len(in_string) - len(self.lexer.unlexed_indices) == len("\sin")
+
+    def test_effective_index(self):
+        """
+        Test that the effective index function works as intended.
+        """
+        in_string = "\sin(x)"
+        self.lexer.unlexed_indices = list(range(len(in_string)))
+        self.lexer._lex_functions(in_string)
+        assert self.lexer._effective_index(0) == 4
+
+
+class TestLexerPasses(unittest.TestCase):
+    """
+    Test that the various stages of the lexer work correctly.
+    """
+
+    def setUp(self):
+        self.lexer = Lexer()
+
+    def test_lex_single_var(self):
+        in_string = "x"
+        out_dict = {"VAR_1": 0}
+        symbol_mapping = {"VAR_1": "x"}
+
+        self.lexer.unlexed_indices = list(range(len(in_string)))
+        lexer_output = self.lexer._lex_variables(in_string)
+        assert lexer_output == ""
+        assert self.lexer.token_index == out_dict
+        assert self.lexer.symbol_mapping == symbol_mapping
+
+    def test_lex_single_lit(self):
+        in_string = "3"
+        out_dict = {"CONS_1": 0}
+        symbol_mapping = {"CONS_1": "3"}
+
+        self.lexer.unlexed_indices = list(range(len(in_string)))
+        lexer_output = self.lexer._lex_literals(in_string)
+        assert lexer_output == ""
+        assert self.lexer.token_index == out_dict
+        assert self.lexer.symbol_mapping == symbol_mapping
+
+    def test_lex_double_lit(self):
+        in_string = "3+2"
+        out_dict = {"CONS_1": 0, "CONS_2": 2}
+        symbol_mapping = {"CONS_1": "3", "CONS_2": "2"}
+
+        self.lexer.unlexed_indices = list(range(len(in_string)))
+        lexer_output = self.lexer._lex_literals(in_string)
+        assert lexer_output == "+"
+        assert self.lexer.token_index == out_dict
+        assert self.lexer.symbol_mapping == symbol_mapping
+
+    def test_lex_single_func(self):
+        in_string = "\sin(x)"
+        out_dict = {"FUNC_1": 0}
+        symbol_mapping = {"FUNC_1": "sin"}
+
+        self.lexer.unlexed_indices = list(range(len(in_string)))
+        lexer_output = self.lexer._lex_functions(in_string)
+        assert lexer_output == "(x)"
+        assert self.lexer.token_index == out_dict
+        assert self.lexer.symbol_mapping == symbol_mapping
+
+    def test_lex_binary_operator(self):
+        in_string = "3+2"
+        out_dict = {"BINOP_INFIX_1": 1}
+        symbol_mapping = {"BINOP_INFIX_1": "+"}
+
+        self.lexer.unlexed_indices = list(range(len(in_string)))
+        lexer_output = self.lexer._lex_operators(in_string)
+        assert lexer_output == "32"
+        assert self.lexer.token_index == out_dict
+        assert self.lexer.symbol_mapping == symbol_mapping
+
+
+# @unittest.skip("Need to test lower level stuff first")
+class TestLexer(unittest.TestCase):
+    """
+    Test that the lexer successfully lexes things.
+    """
+
+    def setUp(self):
+        self.lexer = Lexer()
+
     def _test_token_extraction(
         self, in_string, token_index, symbol_mapping, unlexed_indices
     ):
@@ -50,20 +144,6 @@ class TestLexer(unittest.TestCase):
         assert self.lexer.token_index == token_index
         assert self.lexer.symbol_mapping == symbol_mapping
         assert self.lexer.unlexed_indices == unlexed_indices
-
-    def test_unlexed_indices(self):
-        in_string = "\sin(x)"
-        assert self.lexer.unlexed_indices == []
-        self.lexer.unlexed_indices = list(range(len(in_string)))
-        self.lexer._lex_functions(in_string)
-        assert self.lexer.unlexed_indices == [4, 5, 6]
-        assert len(in_string) - len(self.lexer.unlexed_indices) == len("\sin")
-
-    def test_effective_index(self):
-        in_string = "\sin(x)"
-        self.lexer.unlexed_indices = list(range(len(in_string)))
-        self.lexer._lex_functions(in_string)
-        assert self.lexer._effective_index(0) == 4
 
     def test_function_pass1(self):
         in_string = "\sin(x)"
@@ -131,6 +211,7 @@ class TestLexer(unittest.TestCase):
         mapping = {"CONS_1": "3", "BINOP_INFIX_1": "+", "CONS_2": "2"}
         self._test_lexing(in_string, output, mapping)
 
+    @unittest.skip("Need to test lower level stuff first")
     def test_lexes_variable_equation(self):
         """
         Test that the lexer can handle an equation with free variables.
@@ -162,6 +243,7 @@ class TestLexer(unittest.TestCase):
         }
         self._test_lexing(in_string, output, mapping)
 
+    @unittest.skip("Need to test lower level stuff first")
     def test_lex_easy_function(self):
         """
         Test that the lexer can handle an easy function
@@ -181,6 +263,7 @@ class TestLexer(unittest.TestCase):
         }
         self._test_lexing(in_string, output, mapping)
 
+    @unittest.skip("Need to test lower level stuff first")
     def test_lex_hard_function(self):
         """
         Test that the lexer can handle a complicated function.

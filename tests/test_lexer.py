@@ -63,6 +63,16 @@ class TestLexerUtilities(unittest.TestCase):
         self.lexer._lex_functions(in_string)
         self.assertEqual(self.lexer._effective_index(0), 4)
 
+    def test_build_token_list(self):
+        """
+        Test that the token list builder constructs turns the dict into a list properly.
+        """
+        token_dict = {"CONS_1": 0, "BINOP_INFIX_1": 1, "CONS_2": 2}
+        token_list = ["CONS_1", "BINOP_INFIX_1", "CONS_2"]
+        self.lexer.token_index = token_dict
+        built_list = self.lexer._build_token_list()
+        self.assertEqual(built_list, token_list)
+
 
 class TestLexerPasses(unittest.TestCase):
     """
@@ -202,7 +212,7 @@ class TestLexer(unittest.TestCase):
         lexer_output = self.lexer.lex(in_string)
         self.assertEqual(lexer_output, output)
         for token in lexer_output:
-            self.assertEqual(self.lexer.symbol_table[token], mapping[token])
+            self.assertEqual(self.lexer.symbol_mapping[token], mapping[token])
 
     def test_lexes_simple_equation(self):
         """

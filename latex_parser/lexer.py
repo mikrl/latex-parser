@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List
 import re
 
 # Separate these out so can add Greeks etc
@@ -27,6 +27,7 @@ class Lexer:
         self.symbol_mapping = {}
         self.symbol_counters = {}
         self.unlexed_indices = []
+        self.token_list = []
 
     def _new_token(self, token_type):
         if token_type not in ["CONS", "VAR", "BINOP_INFIX", "BINOP_PRFIX", "FUNC"]:
@@ -34,6 +35,11 @@ class Lexer:
         symbol_count = self.symbol_counters.get(token_type, 1)
         self.symbol_counters.update({token_type: symbol_count + 1})
         return f"{token_type}_{symbol_count}"
+
+    def _build_token_list(self) -> List[str]:
+        token_dict = self.token_index
+        token_list = sorted(token_dict, key=token_dict.get)
+        return token_list
 
     def _effective_index(self, index):
         return self.unlexed_indices[index]
@@ -148,6 +154,5 @@ class Lexer:
         tokenize_variables = self._lex_variables(tokenize_functions)
         tokenize_literals = self._lex_literals(tokenize_variables)
         tokenize_operators = self._lex_operators(tokenize_literals)
-        output = tokenize_operators
-        raise NotImplementedError("Need to reconstitute tokens into list")
+        output = self._build_token_list()
         return output

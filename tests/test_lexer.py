@@ -82,63 +82,105 @@ class TestLexerPasses(unittest.TestCase):
     def setUp(self):
         self.lexer = Lexer()
 
-    def test_lex_single_var(self):
+    def _test_lexer_pass(self, lexer_pass, in_string, output, out_dict, symbol_mapping):
+        self.lexer.unlexed_indices = list(range(len(in_string)))
+        lexer_output = lexer_pass(in_string)
+        self.assertEqual(lexer_output, output)
+        self.assertEqual(self.lexer.token_index, out_dict)
+        self.assertEqual(self.lexer.symbol_mapping, symbol_mapping)
+
+    def test_lex_single_variable(self):
+        lexer_pass = self.lexer._lex_variables
         in_string = "x"
+        output = ""
         out_dict = {"VAR_1": 0}
         symbol_mapping = {"VAR_1": "x"}
 
-        self.lexer.unlexed_indices = list(range(len(in_string)))
-        lexer_output = self.lexer._lex_variables(in_string)
-        self.assertEqual(lexer_output, "")
-        self.assertEqual(self.lexer.token_index, out_dict)
-        self.assertEqual(self.lexer.symbol_mapping, symbol_mapping)
+        self._test_lexer_pass(lexer_pass, in_string, output, out_dict, symbol_mapping)
 
-    def test_lex_single_lit(self):
+    def test_lex_multiple_variables(self):
+        lexer_pass = self.lexer._lex_variables
+        in_string = "x+y+z+100"
+        output = "+++100"
+        out_dict = {"VAR_1": 0, "VAR_2": 2, "VAR_3": 4}
+        symbol_mapping = {"VAR_1": "x", "VAR_2": "y", "VAR_3": "z"}
+
+        self._test_lexer_pass(lexer_pass, in_string, output, out_dict, symbol_mapping)
+
+    def test_no_variables(self):
+        lexer_pass = self.lexer._lex_variables
+        in_string = "{3}"
+        output = "{3}"
+        out_dict = {}
+        symbol_mapping = {}
+
+        self._test_lexer_pass(lexer_pass, in_string, output, out_dict, symbol_mapping)
+
+    def test_lex_single_literal(self):
+
+        lexer_pass = self.lexer._lex_literals
+
+        # Single Literal
         in_string = "3"
+        output = ""
         out_dict = {"CONS_1": 0}
         symbol_mapping = {"CONS_1": "3"}
 
-        self.lexer.unlexed_indices = list(range(len(in_string)))
-        lexer_output = self.lexer._lex_literals(in_string)
-        self.assertEqual(lexer_output, "")
-        self.assertEqual(self.lexer.token_index, out_dict)
-        self.assertEqual(self.lexer.symbol_mapping, symbol_mapping)
+        self._test_lexer_pass(lexer_pass, in_string, output, out_dict, symbol_mapping)
 
-    def test_lex_double_lit(self):
+    def test_lex_double_literal(self):
+        lexer_pass = self.lexer._lex_literals
+
         in_string = "3+2"
+        output = "+"
         out_dict = {"CONS_1": 0, "CONS_2": 2}
         symbol_mapping = {"CONS_1": "3", "CONS_2": "2"}
 
-        self.lexer.unlexed_indices = list(range(len(in_string)))
-        lexer_output = self.lexer._lex_literals(in_string)
-        self.assertEqual(lexer_output, "+")
-        self.assertEqual(self.lexer.token_index, out_dict)
-        self.assertEqual(self.lexer.symbol_mapping, symbol_mapping)
+        self._test_lexer_pass(lexer_pass, in_string, output, out_dict, symbol_mapping)
+
+    def test_lex_parens(self):
+
+        lexer_pass = self.lexer._lex_parens
+
+        in_string = "()(){(3)}"
+        output = "3"
+        out_dict = {
+            "LPAREN_1": 0,
+            "RPAREN_1": 1,
+            "LPAREN_2": 2,
+            "RPAREN_2": 3,
+            "LPAREN_3": 4,
+            "LPAREN_4": 5,
+            "RPAREN_3": 7,
+            "RPAREN_4": 8,
+        }
+        symbol_mapping = {}
+
+        self._test_lexer_pass(lexer_pass, in_string, output, out_dict, symbol_mapping)
 
     def test_lex_single_func(self):
+
+        lexer_pass = self.lexer._lex_functions
+
         in_string = "\sin(x)"
+        output = "(x)"
         out_dict = {"FUNC_1": 0}
         symbol_mapping = {"FUNC_1": "sin"}
 
-        self.lexer.unlexed_indices = list(range(len(in_string)))
-        lexer_output = self.lexer._lex_functions(in_string)
-        self.assertEqual(lexer_output, "(x)")
-        self.assertEqual(self.lexer.token_index, out_dict)
-        self.assertEqual(self.lexer.symbol_mapping, symbol_mapping)
+        self._test_lexer_pass(lexer_pass, in_string, output, out_dict, symbol_mapping)
 
     def test_lex_binary_operator(self):
+
+        lexer_pass = self.lexer._lex_operators
+
         in_string = "3+2"
+        output = "32"
         out_dict = {"BINOP_INFIX_1": 1}
         symbol_mapping = {"BINOP_INFIX_1": "+"}
 
-        self.lexer.unlexed_indices = list(range(len(in_string)))
-        lexer_output = self.lexer._lex_operators(in_string)
-        self.assertEqual(lexer_output, "32")
-        self.assertEqual(self.lexer.token_index, out_dict)
-        self.assertEqual(self.lexer.symbol_mapping, symbol_mapping)
+        self._test_lexer_pass(lexer_pass, in_string, output, out_dict, symbol_mapping)
 
 
-# @unittest.skip("Need to test lower level stuff first")
 class TestLexer(unittest.TestCase):
     """
     Test that the lexer successfully lexes things.
@@ -194,7 +236,7 @@ class TestLexer(unittest.TestCase):
         self.assertEqual(self.lexer.lex(""), [])
 
         # Test that a string of spaces yields a null list
-        for i in range(0, 1024):
+        for i in range(0, 512):
             spaces = " " * i
             self.assertEqual(self.lexer.lex(spaces), [])
 
@@ -212,7 +254,8 @@ class TestLexer(unittest.TestCase):
         lexer_output = self.lexer.lex(in_string)
         self.assertEqual(lexer_output, output)
         for token in lexer_output:
-            self.assertEqual(self.lexer.symbol_mapping[token], mapping[token])
+            if token not in ["LPAREN", "RPAREN"]:
+                self.assertEqual(self.lexer.symbol_mapping[token], mapping[token])
 
     def test_lexes_simple_equation(self):
         """
@@ -223,6 +266,7 @@ class TestLexer(unittest.TestCase):
         in_string = "3+2"
         output = ["CONS_1", "BINOP_INFIX_1", "CONS_2"]
         mapping = {"CONS_1": "3", "BINOP_INFIX_1": "+", "CONS_2": "2"}
+        # breakpoint()
         self._test_lexing(in_string, output, mapping)
 
     @unittest.skip("Need to test lower level stuff first")
@@ -257,11 +301,11 @@ class TestLexer(unittest.TestCase):
         }
         self._test_lexing(in_string, output, mapping)
 
-    @unittest.skip("Need to test lower level stuff first")
     def test_lex_easy_function(self):
         """
         Test that the lexer can handle an easy function
         """
+
         in_string = "\sqrt{4}"
         output = [
             "FUNC_1",
@@ -271,10 +315,9 @@ class TestLexer(unittest.TestCase):
         ]
         mapping = {
             "FUNC_1": "sqrt",
-            "LPAREN": "(",
             "CONS_1": "4",
-            "RPAREN": ")",
         }
+
         self._test_lexing(in_string, output, mapping)
 
     @unittest.skip("Need to test lower level stuff first")

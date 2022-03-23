@@ -36,7 +36,15 @@ class TestLexerUtilities(unittest.TestCase):
         with self.assertRaises(TypeError):
             self.lexer._new_token("UNSUPPORTED")
 
-        for token_type in ["CONS", "VAR", "BINOP_INFIX", "BINOP_PRFIX"]:
+        for token_type in [
+            "CONS",
+            "VAR",
+            "BINOP_INFIX",
+            "BINOP_PRFIX",
+            "FUNC",
+            "LPAREN",
+            "RPAREN",
+        ]:
             self.assertIsNotNone(
                 re.match(f"{token_type}_[0-9]+", self.lexer._new_token(token_type))
             )
@@ -154,7 +162,16 @@ class TestLexerPasses(unittest.TestCase):
             "RPAREN_3": 7,
             "RPAREN_4": 8,
         }
-        symbol_mapping = {}
+        symbol_mapping = {
+            "LPAREN_1": "(",
+            "RPAREN_1": ")",
+            "LPAREN_2": "(",
+            "RPAREN_2": ")",
+            "LPAREN_3": "{",
+            "LPAREN_4": "(",
+            "RPAREN_3": ")",
+            "RPAREN_4": "}",
+        }
 
         self._test_lexer_pass(lexer_pass, in_string, output, out_dict, symbol_mapping)
 
@@ -169,9 +186,9 @@ class TestLexerPasses(unittest.TestCase):
 
         self._test_lexer_pass(lexer_pass, in_string, output, out_dict, symbol_mapping)
 
-    def test_lex_binary_operator(self):
+    def test_lex_infix_binary_operator(self):
 
-        lexer_pass = self.lexer._lex_operators
+        lexer_pass = self.lexer._lex_infix_binops
 
         in_string = "3+2"
         output = "32"
@@ -214,11 +231,11 @@ class TestLexer(unittest.TestCase):
         )
 
     def test_function_pass2(self):
-        in_string = "\sqrt{\sin(x**2)}"
+        in_string = "\sqrt{\sin(x^2)}"
         self.lexer.unlexed_indices = list(range(len(in_string)))
         token_index = {"FUNC_1": 0, "FUNC_2": 6}
         symbol_mapping = {"FUNC_1": "sqrt", "FUNC_2": "sin"}
-        unlexed_indices = [5, 10, 11, 12, 13, 14, 15, 16]
+        unlexed_indices = [5, 10, 11, 12, 13, 14, 15]
         self._test_token_extraction(
             in_string, token_index, symbol_mapping, unlexed_indices
         )
@@ -261,20 +278,15 @@ class TestLexer(unittest.TestCase):
         """
         Tests that when passed simple latex, the lexer lexes correctly.
         """
-        # Test simple inputs
-        # Simple addition of contants
         in_string = "3+2"
         output = ["CONS_1", "BINOP_INFIX_1", "CONS_2"]
         mapping = {"CONS_1": "3", "BINOP_INFIX_1": "+", "CONS_2": "2"}
-        # breakpoint()
         self._test_lexing(in_string, output, mapping)
 
-    @unittest.skip("Need to test lower level stuff first")
     def test_lexes_variable_equation(self):
         """
         Test that the lexer can handle an equation with free variables.
         """
-        # Equation with free variable
         in_string = "x^{3} + 2x -1"
         output = [
             "VAR_1",
@@ -284,28 +296,27 @@ class TestLexer(unittest.TestCase):
             "RPAREN",
             "BINOP_INFIX_2",
             "CONS_2",
-            "VAR_1",
+            "VAR_2",
             "BINOP_INFIX_3",
             "CONS_3",
         ]
         mapping = {
             "VAR_1": "x",
-            "BINOP_INFIX_1": "pow",
-            "LPAREN": "(",
+            "BINOP_INFIX_1": "expt",
             "CONS_1": "3",
-            "RPAREN": ")",
             "BINOP_INFIX_2": "+",
             "CONS_2": "2",
+            "VAR_2": "x",
             "BINOP_INFIX_3": "-",
             "CONS_3": "1",
         }
+
         self._test_lexing(in_string, output, mapping)
 
     def test_lex_easy_function(self):
         """
         Test that the lexer can handle an easy function
         """
-
         in_string = "\sqrt{4}"
         output = [
             "FUNC_1",
@@ -344,7 +355,7 @@ class TestLexer(unittest.TestCase):
             "CONS_3",
             "RPAREN",
             "LPAREN",
-            "VAR_1",
+            "VAR_2",
             "RPAREN",
             "RPAREN",
         ]
@@ -352,7 +363,7 @@ class TestLexer(unittest.TestCase):
             "FUNC_1": "sin",
             "LPAREN": "(",
             "VAR_1": "x",
-            "BINOP_INFIX_1": "pow",
+            "BINOP_INFIX_1": "expt",
             "CONS_1": "2",
             "RPAREN": ")",
             "BINOP_INFIX_2": "+",
@@ -361,6 +372,7 @@ class TestLexer(unittest.TestCase):
             "FUNC_2": "log",
             "BINOP_PRFIX_1": "\\",
             "CONS_3": "1",
+            "VAR_2": "x",
         }
 
         self._test_lexing(in_string, output, mapping)

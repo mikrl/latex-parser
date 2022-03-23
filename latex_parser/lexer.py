@@ -153,42 +153,8 @@ class Lexer:
 
         for paren_pass in [lparen_lexer, rparen_lexer]:
             in_string = paren_pass(self, in_string)
-        # tokenize_lparens = lparen_lexer(self, in_string)
-
-        # tokenize_rparens = rparen_lexer(self, tokenize_lparens)
 
         return in_string
-
-    def _lex_parens2(self, in_string: str) -> str:
-        """
-        :param in_string: the input to be lexed
-        :return: the input with all parens removed
-        """
-        match_indices = []
-
-        lparen_regex = re.compile(_LPAREN)
-        for lparen_match in re.finditer(lparen_regex, in_string):
-            lparen_token = self._new_token("LPAREN")
-            start_idx = self._effective_index(lparen_match.start())
-            self.token_index.update({lparen_token: start_idx})
-
-            match_indices += list(range(lparen_match.start(), lparen_match.end()))
-
-        rparen_regex = re.compile(_RPAREN)
-        for rparen_match in re.finditer(rparen_regex, in_string):
-            rparen_token = self._new_token("RPAREN")
-            start_idx = self._effective_index(rparen_match.start())
-            self.token_index.update({rparen_token: start_idx})
-
-            match_indices += list(range(rparen_match.start(), rparen_match.end()))
-
-        self.unlexed_indices = [
-            _ for _ in self.unlexed_indices if _ not in match_indices
-        ]
-        return self.string_mask(
-            in_string,
-            [idx for idx in range(len(in_string)) if idx not in match_indices],
-        )
 
     def _lex_variables(self, in_string: str) -> str:
         """

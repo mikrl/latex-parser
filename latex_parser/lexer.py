@@ -5,6 +5,7 @@ import re
 _LETTER = "[a-zA-Z]"
 _ALPHANUM = "[a-zA-Z0-9]"
 _NUMBER = "[0-9]+"
+_PRFX_BINARY_OPERATORS = r"\\frac"
 _IFX_BINARY_OPERATORS = "\+|-|\*|/|\^"
 
 # Only supports single subscript depth. Subscripts must be alphanumeric.
@@ -191,10 +192,28 @@ class Lexer:
                 self.symbol_mapping.update({key: _resolve_binop_name(val)})
         return tokenize_operators
 
+    def _lex_prefix_binops(self, in_string: str) -> str:
+        """
+        :param in_string: the input to be lexed
+        :return: the input with all prefix binary operators removed
+        """
+
+        def _resolve_binop_name(binop_latex: str) -> str:
+            binop_mappings = {r"\frac": "prefix_div"}
+            return binop_mappings.get(binop_latex, binop_latex)
+
+        operator_lexer = self.generate_lexer_pass(_PRFX_BINARY_OPERATORS, "BINOP_PRFIX")
+        tokenize_operators = operator_lexer(self, in_string)
+        for key, val in self.symbol_mapping.items():
+            if "BINOP_PRFIX" in key:
+                self.symbol_mapping.update({key: _resolve_binop_name(val)})
+        return tokenize_operators
+
     def lex(self, in_string: str):
 
         self.unlexed_indices = list(range(len(in_string)))
         lexer_passes = [
+            self._lex_prefix_binops,
             self._lex_functions,
             self._lex_variables,
             self._lex_literals,
